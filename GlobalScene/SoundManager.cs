@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -351,29 +351,23 @@ public class SoundManager : MonoBehaviour {
 
     private void Start()
     {
+        CheckExisting();
     }
 
-    /*      public static void CheckExisting()
+    public void CheckExisting()
+    {
+        if (instance == null)
         {
-            if (Instance == null)
-            {
-                 Instance = FindObjectOfType<SoundManager>();
+            instance = FindObjectOfType<SoundManager>();
 
-                GameObject manager = GameObject.Find("SoundManager");
-                if (manager == null) manager = new GameObject("SoundManager");
+        }
+        else
+        {
+            gameObject.SetActive(false);
+            gameObject.name = "Disabled Sound Manager";
+            Debug.Log("Sound Manager already present. Shutting down ...");
+        }
 
-                if (Instance == null) Instance = manager.AddComponent<SoundManager>() ;
-
-            } 
-
-            SoundManager[] array = FindObjectsOfType<SoundManager>();
-            for (int i = 0; i < array.Length; i++)
-            {
-                if (array[i] != Instance) Destroy(array[i].gameObject);
-
-            }
-            Instance.PlayTrack();
-
-        }*/
+    }
 
 }
