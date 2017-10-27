@@ -49,7 +49,6 @@ public class SoundManager : MonoBehaviour {
     public float pitchShiftCap = 0.5f;
 
     public AudioClip[] tracks;
-    public CommonSFX sfxBank;
 
     /// <summary>
     /// Toggles TrackOn to false if it is true and vice-versa.
@@ -297,8 +296,6 @@ public class SoundManager : MonoBehaviour {
     // Use this for initialization
      void Awake  ()
     {
-        instance = GetComponent<SoundManager>();
-        sfxBank = Resources.Load<CommonSFX>("DataObjects/SFXBank");
 
         if (sfxSource == null || trackSource == null)
         {
