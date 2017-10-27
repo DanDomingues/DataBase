@@ -167,6 +167,8 @@ public class SoundManager : MonoBehaviour {
     {
         if (sfxSource == null) return;
         if (!SfxOn) return;
+        if (clips == null) return;
+        if (clips.Length == 0) return;
 
         //Mathf.Clamp01(volume);
         //sfxSource.volume = volume;
