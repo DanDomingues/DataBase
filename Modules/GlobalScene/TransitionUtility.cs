@@ -31,9 +31,12 @@ public static class TransitionUtility
     /// <returns></returns>
     public static Coroutine Transition(float duration, IEnumerator action)
     {
-        Image img = GameObject.Find(filterName).GetComponent<Image>();
-        return img.StartCoroutine(TransitionEffect(img, duration, action));
+        Image img = GetFilter();
 
+        if(img != null)
+            return img.StartCoroutine(TransitionEffect(img, duration, action));
+
+        return null;
     }
 
     /// <summary>
@@ -45,16 +48,22 @@ public static class TransitionUtility
     /// <returns></returns>
     public static Coroutine Transition(float duration, UnityAction action)
     {
-        Image img = GameObject.Find(filterName).GetComponent<Image>();
-        return img.StartCoroutine(TransitionEffect(img, duration, action));
+        Image img = GetFilter();
 
+        if(img != null)
+            return img.StartCoroutine(TransitionEffect(img, duration, action));
+
+        return null;
     }
 
     public static Coroutine Transition(float duration, IEnumerator routine, UnityAction action)
     {
-        Image img = GameObject.Find(filterName).GetComponent<Image>();
-        return img.StartCoroutine(TransitionEffect(img, duration, routine,  action));
+        Image img = GetFilter();
 
+        if (img != null)
+            return img.StartCoroutine(TransitionEffect(img, duration, routine,  action));
+
+        return null;
     }
 
 
