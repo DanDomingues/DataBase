@@ -109,6 +109,7 @@ public  static class SceneUtility
     }
 
 
+
     /// <summary>
     /// Scene transition effect used in local function
     /// </summary>
@@ -116,9 +117,9 @@ public  static class SceneUtility
     {
         //sceneTransitionCleared = false;
 
-        yield return SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Additive);
+        yield return LoadAdditive(TransitionUtility.TransitionImage, nextScene);
 
-        if(action != null) action();
+        if (action != null) action();
         yield return new WaitForEndOfFrame();
 
         yield return SceneManager.UnloadSceneAsync(curScene);
@@ -137,7 +138,8 @@ public  static class SceneUtility
     {
         //sceneTransitionCleared = false;
 
-        yield return SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Additive);
+        yield return LoadAdditive(transitionImage, nextScene);
+        yield return new WaitForEndOfFrame();
 
         if (routine != null) yield return transitionImage.StartCoroutine(routine);
         yield return new WaitForEndOfFrame();
@@ -158,7 +160,8 @@ public  static class SceneUtility
     {
         //sceneTransitionCleared = false;
 
-        yield return SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Additive);
+         yield return LoadAdditive(transitionImage, nextScene);
+
         yield return new WaitForEndOfFrame();
 
         if (action != null) yield return transitionImage.StartCoroutine(routine);
