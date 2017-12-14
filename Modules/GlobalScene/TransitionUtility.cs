@@ -68,6 +68,7 @@ public static class TransitionUtility
         }
 
         yield return image.StartCoroutine(action);
+        yield return new WaitForEndOfFrame();
 
         while (image.color.a > 0)
         {
