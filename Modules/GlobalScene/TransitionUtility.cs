@@ -7,11 +7,20 @@ using UnityEngine.Events;
 public static class TransitionUtility
 {
     public const string filterName = "TransitionFilter";
+    public static Coroutine corout;
+
     public static Image TransitionImage
     {
         get { return GameObject.Find(filterName).GetComponent<Image>(); }
     }
 
+    private static Image GetFilter()
+    {
+        if(corout == null) return GameObject.Find(filterName).GetComponent<Image>();
+
+        Debug.Log("Transition busy when method was called.");
+        return null;
+    }
 
     /// <summary>
     /// Fade transition with Coroutine parameter that runs between fades
