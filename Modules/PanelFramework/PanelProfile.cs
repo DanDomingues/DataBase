@@ -7,24 +7,15 @@ using UnityEngine;
 public class PanelProfile : ScriptableObject
 {
 
-    [Header("Pop Appear  Properties")]
-    public AnimationCurve popUpCurve;
-    public AnimationCurve popOutCurve;
-
-    [Range(0.2f, 3.0f)]
-    public float speedModifier = 1.0f;
-
-    [Header("Vertical Appear Properties")]
-
-    public AnimationCurve verticalAppearCurve;
-    public AnimationCurve verticalHideCurve;
-
-    [Range(0.2f, 3.0f)]
-    public float verticalSpeed = 1.0f;
+    public PanelTransitionData[] openTransitions;
+    public PanelTransitionData[] closeTransitions;
 
     [Space(10)]
-    public AppearType openTransition;
-    public AppearType closeTransition;
+    public AppearType openTransitionType;
+    public AppearType closeTransitionType;
+
+    public float openTransitionSpeed;
+    public float closeTransitionSpeed;
 
     [Space(10), Header("Sound Clips")]
     public AudioClip openSound;
@@ -32,12 +23,34 @@ public class PanelProfile : ScriptableObject
     public AudioClip selectSound;
     public AudioClip confirmSound;
     public AudioClip returnSound;
+
+    public PanelProfile()
+    {
+        int length = System.Enum.GetNames(typeof(AppearType)).Length;
+        openTransitions = new PanelTransitionData[length];
+        closeTransitions = new PanelTransitionData[length];
+
+        openTransitionSpeed = 1.0f;
+        closeTransitionSpeed = 1.0f;
+    }
+
+    public PanelTransitionData GetTransition(bool transitionNature)
+    {
+        var transitions = transitionNature ? openTransitions : closeTransitions;
+        var type = transitionNature ? openTransitionType : closeTransitionType;
+        return transitions[(int)type];
+
+    }
+
 }
 
 public enum AppearType
 {
     Pop,
-    Vertical,
+    BottomToTop,
+    TopToBottom,
+    LeftToRight,
+    RightToLeft,
     Instant
 }
 

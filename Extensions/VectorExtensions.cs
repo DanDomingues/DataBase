@@ -41,11 +41,11 @@ public static class VectorExtensions
     {
         return new Vector3(one.x / two.x, one.y / two.y, one.z / two.z);
     }
+
     public static Vector3 Increment01(this Vector3 v, Vector3 add)
     {
         return new Vector3(v.x.Increment01(add.x), v.y.Increment01(add.y), v.z.Increment01(add.z));
     }
-
 
     public static Vector3 GetXY(this Vector3 v)
     {
@@ -66,7 +66,6 @@ public static class VectorExtensions
 
         return v;
     }
-
 
     /// <summary>
     /// Gets the quadrant that the current direction is contained in in a 360 circle.
@@ -139,6 +138,27 @@ public static class VectorExtensions
         return finalIndex;
     }
 
+    public static Vector4 Abs (this Vector4 vector)
+    {
+        return new Vector4
+            (
+                Mathf.Abs(vector.x),
+                Mathf.Abs(vector.y),
+                Mathf.Abs(vector.z),
+                Mathf.Abs(vector.w)
+            );
+
+    }
+
+    public static Vector3 Abs( this Vector3 vector)
+    {
+        return   ((Vector4)vector).Abs(); 
+    }
+
+    public static Vector2 Abs(this Vector2 vector)
+    {
+        return (Vector4)vector.Abs();
+    }
 
 
 }

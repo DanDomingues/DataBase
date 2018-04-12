@@ -3,48 +3,59 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class InputCentral
+public static class ControllerInputs
 {
 
-    public static bool confirm
+    public static bool ActionBottomButton
     {
         get { return GetControllerValue(0, ButtonState.Pressed); }
     }
 
-    public static bool confirmReleased
+    public static bool ActionBottomButtonReleased
     {
         get { return GetControllerValue(0, ButtonState.Released); }
     }
 
-    public static bool back
+    public static bool ActionRightButton
     {
         get { return GetControllerValue(1); }
     }
 
-    public static bool attack
+    public static bool ActionLeftButton
     {
         get { return GetControllerValue(2); }
     }
 
-    public static bool special
+    public static bool ActionTopButton
     {
         get { return GetControllerValue(3); }
     }
 
-    public static bool rightBumper
+    public static bool RightBumper
     {
         get { return GetControllerValue(5); }
     }
 
-    public static bool leftBumper
+    public static bool LeftBumper
     {
         get { return  GetControllerValue(4); }
     }
 
-    public static bool start
+    public static bool Start
     {
         get { return GetControllerValue(7); }
     }
+
+    public static bool LeftStick
+    {
+        get { return GetControllerValue(8); }
+    }
+
+    public static bool RightStick
+    {
+        get { return GetControllerValue(9); }
+    }
+
 
     private enum ButtonState { Pressed, Held, Released}
 

@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 public static class InvokeAlternatives
 {
-    //TO-DO: PASS Coutine arrays to Coroutine lists.
+    
     private static Coroutine[] InvokeRoutine;
     private static Coroutine[] InvokeRepeatingRoutine;
 
@@ -60,7 +60,6 @@ public static class InvokeAlternatives
         action();
     }
 
-
     /// <summary>
     /// Waits a 'delay' and runs an UnityAction after it
     /// </summary>
@@ -79,6 +78,17 @@ public static class InvokeAlternatives
     {
         yield return new WaitForSeconds(delay);
         action();
+    }
+
+    public static Coroutine InvokeAfterFrame(MonoBehaviour starterScript, UnityAction action)
+    {
+        return starterScript.StartCoroutine(InvokeAfterFrame_Routine(action));
+    }
+
+    private static IEnumerator InvokeAfterFrame_Routine(UnityAction action)
+    {
+        yield return new WaitForEndOfFrame();
+        action.Execute();
     }
 
     /// <summary>

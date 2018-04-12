@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
 
+[RequireComponent(typeof(CanvasGroup))]
 public class PanelBase : MonoBehaviour
 {
 
@@ -42,6 +43,18 @@ public class PanelBase : MonoBehaviour
     public bool overrideSound;
     protected Coroutine transitionCorout;
 
+    public delegate void OnToggleEvent(Boolean value);
+    public event OnToggleEvent OnPanelToggle;
+    public event OnToggleEvent OnPanelToggleLate;
+
+    public bool Active { get { return group.blocksRaycasts; } }
+    public bool InTransition { get { return transitionCorout != null; } }
+
+    private void Awake()
+    {
+
+    }
+
     // Use this for initialization
     protected virtual void Start ()
     {
@@ -53,89 +66,226 @@ public class PanelBase : MonoBehaviour
 
     }
 
-    #region TogglePanel Overloads
-    protected void RawToggle(bool nature, UnityAction action)
+    private void Reset()
     {
-        if (transitionCorout != null) return;
+        if(profile == null)
+        {
+            var newProfile = Resources.Load<PanelProfile>("DataObjects/PanelProfiles/DefaultPanelProfile");
+            profile = newProfile;
+        }
+    }
+
+    #region Raw Toggle Overloads
+
+    /// <summary>
+    /// Toggles the panel without triggering the 'OnPanelToggle' event.
+    /// </summary>
+    /// <param name="type">Transition Type</param>
+    /// <param name="value">If the panel is being turned on or off</param>
+    /// <param name="action">Action to be executed before or after the Toggle Transition</param>
+    public void RawToggle(AppearType type, bool value, UnityAction action)
+    {
+
+        if (transitionCorout != null) StopCoroutine(transitionCorout);
+
+        if(!overrideSound)
+        {
+            if (group.blocksRaycasts) SoundManager.instance.PlaySingle(profile.closeSound);
+            else SoundManager.instance.PlaySingle(profile.openSound);
+        }
 
         transform.localScale = refSize;
         rect.anchoredPosition = refPosition;
 
-        AppearType type = group.blocksRaycasts ? profile.closeTransition : profile.openTransition;
         IEnumerator routine = null;
         switch (type)
         {
             case AppearType.Pop:
-                routine = PopRoutine(nature, action);
-
+                routine = PopRoutine(value, action);
                  break;
 
-            case AppearType.Vertical:
-                routine = VerticalRoutine(nature, action);
+            case AppearType.BottomToTop:
+                routine = MovementRoutine(value, new Vector2(0, 1.0f), action);
+                break;
+
+            case AppearType.TopToBottom:
+                routine = MovementRoutine(value, new Vector2(0, -1.0f), action);
+                break;
+
+            case AppearType.RightToLeft:
+                routine = MovementRoutine(value, new Vector2(-1.0f, 0.0f), action);
+                break;
+
+            case AppearType.LeftToRight:
+                routine = MovementRoutine(value, new Vector2(1.0f, 0.0f), action);
                 break;
 
             case AppearType.Instant:
-                group.Toggle(nature);
-                action();
-                break;
+                group.Toggle(value);
+                action.Execute();
+                return;
 
             default:
-                break;
+                return;
+
         }
 
-        if(routine != null)
+        transitionCorout =  StartCoroutine(routine);
+
+    }
+
+    /// <summary>
+    /// Toggles the panel without triggering the 'OnPanelToggle' event.
+    /// </summary>
+    /// <param name="value">If the panel is being turned on or off</param>
+    /// <param name="action">Action to be executed before or after the Toggle Transition</param>
+    public void RawToggle(bool value, UnityAction action)
+    {
+        AppearType type = group.blocksRaycasts ? profile.closeTransitionType : profile.openTransitionType;
+        RawToggle(type, value, action);
+    }
+
+    /// <summary>
+    /// Toggles the panel without triggering the 'OnPanelToggle' event.
+    /// </summary>
+    /// <param name="value">If the panel is being turned on or off</param>
+    /// <param name="delay">Delay between action being called and it's execution</param>
+    /// <param name="action">Action to be executed before or after the Toggle Transition</param>
+    public void RawToggle(bool value, float delay, UnityAction action)
+    {
+        RawToggle(value, () =>
         {
-            transitionCorout = StartCoroutine(routine);
-        }
+            InvokeAlternatives.InvokeRealtime(this, delay, action);
 
-        if (!overrideSound)
-        {
-            //AudioClip sfx = nature ? SoundManager.instance.sfxBank.openMenu : SoundManager.instance.sfxBank.closeMenu;
-            //SoundManager.instance.PlaySingle(sfx);
+        });
 
-        }
     }
 
-    protected void RawToggle(bool nature)
+    /// <summary>
+    /// Toggles the panel without triggering the 'OnPanelToggle' event.
+    /// </summary>
+    /// <param name="value">If the panel is being turned on or off</param>
+    public void RawToggle(bool value)
     {
-        RawToggle(nature, null);
+        RawToggle(value, null);
     }
 
-    protected void RawToggle(UnityAction action)
+    /// <summary>
+    /// Toggles the panel without triggering the 'OnPanelToggle' event.
+    /// </summary>
+    public void RawToggle()
     {
-        RawToggle(!group.blocksRaycasts, action);
+         RawToggle(!group.blocksRaycasts);
     }
 
-    protected void RawToggle()
-    {
-         RawToggle(null);
-    }
     #endregion
 
+    #region Toggle Overloads
+
+    /// <summary>
+    /// Toggles the panel
+    /// </summary>
     public virtual void Toggle()
     {
-        if (group.blocksRaycasts)
+        Toggle(!group.blocksRaycasts);
+    }
+
+    /// <summary>
+    /// Toggles the panel
+    /// </summary>
+    /// <param name="value">If the panel is being turned on or off</param>
+    public virtual void Toggle(bool value)
+    {
+        Toggle(value, null);
+    }
+
+    /// <summary>
+    /// Toggles the panel
+    /// </summary>
+    /// <param name="action">Action to be executed before or after the Toggle Transition</param>
+    public void Toggle(UnityAction action)
+    {
+        Toggle(!group.blocksRaycasts, action);
+    }
+
+    /// <summary>
+    /// Toggles the panel
+    /// </summary>
+    /// <param name="value">If the panel is being turned on or off</param>
+    /// <param name="action">Action to be executed before or after the Toggle Transition</param>
+    public virtual void Toggle(bool value, UnityAction action)
+    {
+        action = GetEventInclusiveAction(value, action);
+
+        RawToggle(value, action);
+        LocalOnToggle(value);
+    }
+
+    /// <summary>
+    /// Toggles the panel
+    /// </summary>
+    /// <param name="delay">Delay between action being called and it's execution</param>
+    /// <param name="action">Action to be executed before or after the Toggle Transition</param>
+    public virtual void Toggle(float delay, UnityAction action)
+    {
+        Toggle(!group.blocksRaycasts, delay, action);
+    }
+
+    /// <summary>
+    /// Toggles the panel
+    /// </summary>
+    /// <param name="value">If the panel is being turned on or off</param>
+    /// <param name="delay">Delay between action being called and it's execution</param>
+    /// <param name="action">Action to be executed before or after the Toggle Transition</param>
+    public virtual void Toggle(bool value, float delay, UnityAction action)
+    {
+        action = GetEventInclusiveAction(value, action);
+
+        RawToggle(value, delay, action);
+        LocalOnToggle(value);
+    }
+#endregion
+
+    private UnityAction GetEventInclusiveAction(bool value, UnityAction inputAction)
+    {
+        return 
+        () =>
         {
-            InvokeAlternatives.InvokeRealtime(this, 0.2f, () =>
+            inputAction.Execute();
+
+            if (OnPanelToggleLate != null)
+                OnPanelToggleLate(value);
+        };
+
+    }
+
+    public void LocalOnToggle(bool value)
+    {
+
+        if (!value)
+        {
+            InvokeAlternatives.InvokeAfterFrame(this, () =>
             {
                 PanelEvents.instance.OnPanelClose.SafeInvoke();
             });
+
         }
 
-        RawToggle();
+        if (OnPanelToggle != null) OnPanelToggle(value);
     }
 
-    public IEnumerator PopRoutine(bool nature, UnityAction action )
+    IEnumerator PopRoutine(bool value, UnityAction action )
     {
 
         float t = 0;
-        int way = nature ? 1 : -1;
+        int way = value ? 1 : -1;
 
-        AnimationCurve curve = nature ? profile.popUpCurve : profile.popOutCurve;
+        var transition = profile.GetTransition(value);
+        var curve = value ? transition.openCurve : transition.closeCurve;
 
         if (way > 0)
         {
-            group.Toggle(nature);
+            group.Toggle(value);
 
             action.Execute();
 
@@ -146,57 +296,67 @@ public class PanelBase : MonoBehaviour
             transform.localScale = refSize * curve.Evaluate(t);
             yield return new WaitForEndOfFrame();
 
-            t += Time.unscaledDeltaTime * profile.speedModifier;
+            t += Time.unscaledDeltaTime * transition.speedModifier;
         }
 
         transform.localScale = refSize * curve.Evaluate(1.0f);
 
         if (way < 0)
         {
-            group.Toggle(nature);
+            group.Toggle(value);
             action.Execute();
         }
 
         transitionCorout = null;
     }
 
-    public IEnumerator VerticalRoutine(bool nature, UnityAction action)
+    IEnumerator MovementRoutine(bool value, Vector2 movement, UnityAction action)
     {
-        Vector2 plusSize = new Vector2(1920, 540 + (rect.sizeDelta.y/2));
-        int way = nature ? 1 : -1;
+        Vector2 plusSize = new Vector2( ((1920/2) + (rect.sizeDelta.x/2)) * movement.x, 
+                                        ((1080/2) + (rect.sizeDelta.y/2)) * movement.y);
 
-        float target = nature ? refPosition.y : rect.anchoredPosition.y - plusSize.y;
-        AnimationCurve curve = nature ? profile.verticalAppearCurve : profile.verticalHideCurve;
-        
+        int way = value ? 1 : -1;
+        plusSize *= way;
+
+        var transition = profile.GetTransition(value);
+        var curve = value ? transition.openCurve : transition.closeCurve;
+
+        Vector2 start = rect.anchoredPosition;
+        Vector2 target = value ? refPosition : refPosition - plusSize;
+
         if (way > 0)
         {
-            rect.anchoredPosition -= Vector2.up * plusSize.y;
-            group.Toggle(nature);
+            rect.anchoredPosition -= plusSize;
+            group.Toggle(value);
             action.Execute();
         }
 
         //rect.anchoredPosition = Vector2.zero;
 
         float t = 0;
+        float factor = 0f;
         while (t < 1.0f)
         {
-            rect.anchoredPosition = refPosition -  ((plusSize.y * Vector2.up) * (1 - curve.Evaluate(t)));
+            factor = 1 - curve.Evaluate(t);
+            rect.anchoredPosition = refPosition -  (plusSize * factor);
             //rect.anchoredPosition += Vector2.up * plusSize.y * Time.deltaTime * profile.verticalSpeed * way;
             yield return new WaitForEndOfFrame();
 
-            t += Time.deltaTime * profile.verticalSpeed;
+            t += Time.unscaledDeltaTime * transition.speedModifier;
         }
 
-        rect.anchoredPosition = refPosition - ((plusSize.y * Vector2.up) * (way > 0 ? 0 : 1));
+        rect.anchoredPosition = target;
 
         if (way < 0)
         {
-            group.Toggle(nature)  ;
+            group.Toggle(value);
             action.Execute();
         }
 
         transitionCorout = null;
 
     }
+
+
 
 }
