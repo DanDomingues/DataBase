@@ -13,9 +13,9 @@ public class MultiLanguageText : MonoBehaviour
     private void Start()
     {
         text = GetComponent<Text>();
-        SetLanguage(SettingsPanel.Instance.CurrentLanguage);
+        SetLanguage(MultiLanguage.CurrentLanguage);
 
-        SettingsPanel.Instance.OnLanguageChange.Subscribe(SetLanguage);
+        MultiLanguage.OnLanguageChange.Subscribe(SetLanguage);
     }
 
     private void Reset()

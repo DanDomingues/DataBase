@@ -5,8 +5,10 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Events;
 
-public  static class SceneUtility
+public static class SceneUtility
 {
+    public delegate void SceneEvent();
+    public static event SceneEvent OnSceneUnload;
 
     private static List<string> AddedSceneNames
     {
@@ -122,7 +124,7 @@ public  static class SceneUtility
         if (action != null) action();
         yield return new WaitForEndOfFrame();
 
-        yield return SceneManager.UnloadSceneAsync(curScene);
+        yield return UnloadSceneAsync(curScene);
 
         yield return new WaitForEndOfFrame();
         //yield return new WaitUntil(() => { return sceneTransitionCleared; });
@@ -144,7 +146,7 @@ public  static class SceneUtility
         if (routine != null) yield return transitionImage.StartCoroutine(routine);
         yield return new WaitForEndOfFrame();
 
-        yield return SceneManager.UnloadSceneAsync(curScene);
+        yield return UnloadSceneAsync(curScene);
 
         yield return new WaitForEndOfFrame();
         //yield return new WaitUntil(() => { return sceneTransitionCleared; });
@@ -170,7 +172,7 @@ public  static class SceneUtility
         action();
         yield return new WaitForEndOfFrame();
 
-        yield return SceneManager.UnloadSceneAsync(curScene);
+        yield return UnloadSceneAsync(curScene);
 
         yield return new WaitForEndOfFrame();
         //yield return new WaitUntil(() => { return sceneTransitionCleared; });
@@ -241,7 +243,7 @@ public  static class SceneUtility
     {
         if (AddedSceneNames.Contains(sceneName))
         {
-            yield return SceneManager.UnloadSceneAsync(sceneName );
+            yield return UnloadSceneAsync(sceneName );
         }
     }
 
@@ -261,10 +263,15 @@ public  static class SceneUtility
     {
         if (AddedSceneNames.Contains(sceneName))
         {
-            yield return SceneManager.UnloadSceneAsync(sceneName);
+            yield return UnloadSceneAsync(sceneName);
             yield return SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
         }
     }
- 
+    
+   static IEnumerator UnloadSceneAsync(string sceneName)
+    {
+        OnSceneUnload?.Invoke();
+        yield return SceneManager.UnloadSceneAsync(sceneName);
+    }
 
 }

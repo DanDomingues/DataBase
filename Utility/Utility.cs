@@ -77,45 +77,4 @@ public static class Utility
 
     }
 
-    public static void StopCorout(MonoBehaviour mono, Coroutine[] corouts)
-    {
-        foreach(Coroutine corout in corouts) StopCorout(mono ,corout);
-    }
-    public static void StopCorout(MonoBehaviour mono, Coroutine corout)
-    {
-        if(corout != null) mono.StopCoroutine(corout);
-    }
-    public static void StopCorout(MonoBehaviour mono, List<Coroutine> corouts)
-    {
-        StopCorout(mono, corouts.ToArray());
-    }
-
-    public static object[] ExpandArray(object[] input, object insert)
-    {
-        List<object> list = new List<object>(input);
-        list.Add(insert);
-        return list.ToArray();
-    }
-
-    public static int BiggestOfTwo(int a, int b)
-    {
-        int result = 0;
-
-        if (a > b) result = a;
-        else result = b;
-
-        return result;
-    }
-
-    public static bool Compare(float compared, float comparison, int way)
-    {
-
-        if (way < 0) return compared < comparison;
-
-        if (way > 0) return compared > comparison;
-
-        else return false;
-
-    }
-
 }

@@ -15,7 +15,6 @@ public static class CoroutineUtility
         return mono.StartCoroutine(WaitUntil_Routine(func, 0f, action));
     }
 
-
     static IEnumerator WaitUntil_Routine(System.Func<bool> func, float delay, UnityAction action)
     {
         yield return new WaitUntil(func);
@@ -24,7 +23,18 @@ public static class CoroutineUtility
         action.Execute();
     }
 
-
+    public static void StopCorout(MonoBehaviour mono, Coroutine[] corouts)
+    {
+        foreach(Coroutine corout in corouts) StopCorout(mono ,corout);
+    }
+    public static void StopCorout(MonoBehaviour mono, Coroutine corout)
+    {
+        if(corout != null) mono.StopCoroutine(corout);
+    }
+    public static void StopCorout(MonoBehaviour mono, List<Coroutine> corouts)
+    {
+        StopCorout(mono, corouts.ToArray());
+    }
 }
 
 public static class CoroutineUtility_Extensions

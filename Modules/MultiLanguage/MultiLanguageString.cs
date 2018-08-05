@@ -13,7 +13,7 @@ public class MultiLanguageString
     {
         get
         {
-            return GetValue(SettingsPanel.Instance.CurrentLanguage);
+            return GetValue(MultiLanguage.CurrentLanguage);
         }
     }
 

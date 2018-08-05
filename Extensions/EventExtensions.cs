@@ -59,24 +59,5 @@ public static class EventExtensions
         e.Invoke(target);
     }
 
-    //Bool Event
-    public static void Subscribe(this BoolEvent e, UnityAction<bool> action)
-    {
-        if (e == null) e = new BoolEvent();
-        e.AddListener(action);
-    }
-
-    public static void SafeInvoke(this BoolEvent e, bool target)
-    {
-        if (e == null)
-        {
-            Debug.Log("Event is empty, Invoke aborted");
-            return;
-        }
-
-        e.Invoke(target);
-    }
-
-
 }
 
