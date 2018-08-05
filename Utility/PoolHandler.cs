@@ -3,34 +3,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PoolHandler : MonoBehaviour
+public class PoolHandler : AutomatedSingleton<PoolHandler>
 {
-    public static PoolHandler instance;
-
     public Transform poolHost;
     public Transform objHost;
 
     public List<PoolData> pools;
 
-#if UNITY_EDITOR
-    [Header("Editor")]
-    [SerializeField]
-    GameObject[] objectsToAdd;
-
-#endif
-
-    private void Awake()
+    protected override void Awake()
     {
-        instance = this;
-
-        if (pools == null) pools = new List<PoolData>();
-        pools = pools.Where(pool => pool.prefab != null).ToList();
-
-        for (int i = 0; i < pools.Count; i++)
-        {
-            pools[i].bank.gameObject.SetActive(false);
-        }
-
+        base.Awake();
+        poolHost = transform;
+        pools = new List<PoolData>();
     }
 
     public void SetHost(Transform host)
@@ -40,29 +24,26 @@ public class PoolHandler : MonoBehaviour
 
     public void AddPool(GameObject prefab, Transform objParent)
     {
-        PoolData pool = new PoolData(prefab, poolHost, objParent);
         for (int i = 0; i < pools.Count; i++)
         {
             if (pools[i].prefab == prefab)
             {
-                Debug.Log("Object pool already exists");
+                //Debug.Log("Object pool already exists");
                 return;
             }
         }
 
+        PoolData pool = new PoolData(prefab, poolHost, objParent);
         pools.Add(pool);
     }
-
     public void AddPool(GameObject prefab)
     {
         AddPool(prefab, null);
     }
-
     public void AddPool(GameObject[] prefabs)
     {
         AddPool(prefabs, null);
     }
-
     public void AddPool(GameObject[] prefabs, Transform parent)
     {
         for (int i = 0; i < prefabs.Length; i++)
@@ -75,13 +56,15 @@ public class PoolHandler : MonoBehaviour
     public GameObject GetObject(string key)
     {
         GameObject value = null;
-        for (int i = 0; i < pools.Count; i++)
+
+        var chosenPool = pools.FirstOrDefault(pool => pool.key == key);
+        if(chosenPool != null)
         {
-            if (pools[i].key == key)
-            {
-                value = pools[i].GetObject();
-                return value;
-            }
+            value = chosenPool.GetObject();
+        }
+        else
+        {
+            Debug.Log(string.Format("No Pool found with given key ({0})", key));
         }
 
         return value;
@@ -89,15 +72,11 @@ public class PoolHandler : MonoBehaviour
 
     public GameObject GetObject(string key, Vector3 position)
     {
-        GameObject value = null;
-        for (int i = 0; i < pools.Count; i++)
+        GameObject value = GetObject(key);
+
+        if(value != null)
         {
-            if(pools[i].key == key)
-            {
-                value = pools[i].GetObject();
-                value.transform.localPosition = position;
-                return value;
-            }
+            value.transform.localPosition = position;
         }
 
         return value;
@@ -147,17 +126,8 @@ public class PoolHandler : MonoBehaviour
         InvokeAlternatives.Invoke(this, delay, () => { StoreObject(input); });
     }
 
-#if UNITY_EDITOR
-    [ContextMenu("Add Editor Objects as Pools")]
-    public void AddObjectsToPools()
-    {
-        AddPool(objectsToAdd);
-    }
-
-#endif
-
     [System.Serializable]
-    public struct PoolData
+    public class PoolData
     {
         public string key;
         public Transform bank;
@@ -196,6 +166,7 @@ public class PoolHandler : MonoBehaviour
             if (bank.childCount > 0)
             {
                 value = bank.GetChild(0).gameObject;
+                //value.SetActive(true);
             }
             else
             {
@@ -203,15 +174,16 @@ public class PoolHandler : MonoBehaviour
             }
           
             value.name = key;
-            value.transform.SetParent(actionParent);
+            value.transform.parent = actionParent;
 
             return value;
 
         }
 
+
         public void StoreObject(GameObject obj)
         {
-            obj.transform.SetParent(bank);
+            obj.transform.parent = bank;
         }
     }
 }

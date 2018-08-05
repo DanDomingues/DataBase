@@ -15,7 +15,11 @@ public static class CanvasGroupExtensions
         canvas.interactable = value;
         canvas.blocksRaycasts = value;
         canvas.alpha = value ? 1 : 0;
+    }
 
+    public static void SetBlocksRaycasts(this CanvasGroup group, bool value)
+    {
+        group.blocksRaycasts = value;
     }
 
     public static void Toggle(this CanvasGroup canvas)
