@@ -41,7 +41,6 @@ public static class VectorExtensions
     {
         return new Vector3(one.x / two.x, one.y / two.y, one.z / two.z);
     }
-
     public static Vector3 Increment01(this Vector3 v, Vector3 add)
     {
         return new Vector3(v.x.Increment01(add.x), v.y.Increment01(add.y), v.z.Increment01(add.z));
@@ -59,12 +58,7 @@ public static class VectorExtensions
 
     public static Vector2 SafeNormalize(this Vector2 v)
     {
-        Vector2 normaVersion = v.normalized;
-
-        if (v.magnitude > 1)
-            v = normaVersion;
-
-        return v;
+        return new Vector2(Mathf.Clamp(v.x, -1, 1), Mathf.Clamp(v.y, -1, 1));
     }
 
     /// <summary>
@@ -138,27 +132,14 @@ public static class VectorExtensions
         return finalIndex;
     }
 
-    public static Vector4 Abs (this Vector4 vector)
+    public static string ToStringRaw(this Vector3 vector)
     {
-        return new Vector4
-            (
-                Mathf.Abs(vector.x),
-                Mathf.Abs(vector.y),
-                Mathf.Abs(vector.z),
-                Mathf.Abs(vector.w)
-            );
-
+        return string.Format("{0}|{1}|{2}", vector.x.ToString("0.0"), vector.y.ToString("0.0"), vector.z.ToString("0.0"));
     }
 
-    public static Vector3 Abs( this Vector3 vector)
+    public static string ToStringRaw(this Vector2 vector)
     {
-        return   ((Vector4)vector).Abs(); 
+        return ((Vector3)vector).ToStringRaw();
     }
-
-    public static Vector2 Abs(this Vector2 vector)
-    {
-        return (Vector4)vector.Abs();
-    }
-
 
 }

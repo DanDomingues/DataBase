@@ -35,6 +35,7 @@ public static class AnimatorExtensions
         if(action != null) action();
     }
 
+
     /// <summary>
     /// Lerps an Animator Float through time
     /// </summary>
@@ -42,7 +43,7 @@ public static class AnimatorExtensions
     /// <param name="starter">Monobehaviour to host the action</param>
     /// <param name="floatName">Name of the float Parameter</param>
     /// <param name="targetValue">Value to be acheived</param>
-    /// <param name="lerpTime">Desired time for the value transition</param>
+    /// <param name="lerpTime">Desired time for the value interpolation</param>
     public static void LerpFloat(this Animator anim, MonoBehaviour starter, string floatName, float targetValue, float lerpTime)
     {
         starter.StartCoroutine(LerpFloatEffect(anim, floatName, targetValue, lerpTime));

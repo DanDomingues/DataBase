@@ -16,9 +16,19 @@ public static class ControllerInputs
         get { return GetControllerValue(0, ButtonState.Released); }
     }
 
+    public static bool ActionRightButtonDown
+    {
+        get { return GetControllerValue(1, ButtonState.Pressed); }
+    }
+
+    public static bool ActionRightButtonReleased
+    {
+        get { return GetControllerValue(1, ButtonState.Released); }
+    }
+
     public static bool ActionRightButton
     {
-        get { return GetControllerValue(1); }
+        get { return GetControllerValue(1, ButtonState.Held); }
     }
 
     public static bool ActionLeftButton
@@ -46,6 +56,12 @@ public static class ControllerInputs
         get { return GetControllerValue(7); }
     }
 
+    public static bool Select
+    {
+        get { return GetControllerValue(6); }
+    }
+
+
     public static bool LeftStick
     {
         get { return GetControllerValue(8); }
@@ -54,6 +70,14 @@ public static class ControllerInputs
     public static bool RightStick
     {
         get { return GetControllerValue(9); }
+    }
+
+    public static Vector2Int DPad
+    {
+        get
+        {
+            return new Vector2Int((int)Input.GetAxisRaw("DPadHorizontal"), (int)Input.GetAxisRaw("DPadVertical"));
+        }
     }
 
 

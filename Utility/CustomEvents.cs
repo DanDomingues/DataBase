@@ -14,3 +14,9 @@ public class IntEvent : UnityEvent<int>
 {
 
 }
+
+[System.Serializable]
+public class BoolEvent : UnityEvent<bool>
+{
+
+}
