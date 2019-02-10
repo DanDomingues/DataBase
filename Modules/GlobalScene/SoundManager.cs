@@ -4,12 +4,13 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Events;
 
-public class SoundManager : MonoBehaviour {
+public class SoundManager : MonoBehaviour 
+{
 
-    public static SoundManager instance;
+    public static SoundManager Instance;
 
     public AudioSource sfxSource;
-    public AudioSource trackSource;
+    public AudioSource[] trackSources;
 
     [SerializeField]
     private bool m_sfxOn = true;
@@ -41,7 +42,7 @@ public class SoundManager : MonoBehaviour {
         set
         {
             m_trackOn = value;
-            PauseTrack(value);
+            PauseTrack(!value);
         }
     }
 
@@ -50,13 +51,39 @@ public class SoundManager : MonoBehaviour {
 
     public AudioClip[] tracks;
 
+    [SerializeField] float trackVolume;
+    [SerializeField] int activeTrackSourceID;
+    Coroutine multiTrackRoutine;
+    Coroutine crossFadeRoutine;
+
+    public AudioSource TrackSource => trackSources[activeTrackSourceID];
+    public AudioSource SupportTrackSource => trackSources[1 - activeTrackSourceID];
+
+    public float SfxVolume
+    {
+        get { return sfxSource.volume; }
+        set { sfxSource.volume = value; }
+    }
+
+    public float TrackVolume
+    {
+        get { return trackVolume; }
+        set 
+        {
+            TrackSource.volume = value;
+            trackSources[1 - activeTrackSourceID].volume = 0;
+            trackVolume = value;
+        }
+    }
+
+
+
     /// <summary>
     /// Toggles TrackOn to false if it is true and vice-versa.
     /// </summary>
     public void ToggleTrack()
     {
-        m_trackOn =  !m_trackOn;
-        if(!m_trackOn) PauseTrack();
+        TrackOn = !TrackOn;
     }
 
     /// <summary>
@@ -170,6 +197,7 @@ public class SoundManager : MonoBehaviour {
         if (clips == null) return;
         if (clips.Length == 0) return;
 
+
         //Mathf.Clamp01(volume);
         //sfxSource.volume = volume;
 
@@ -196,14 +224,51 @@ public class SoundManager : MonoBehaviour {
 
     #endregion PlaySingle Overloads
 
-    public void PlayTrack(AudioClip[] trackArray)
+    /// <summary>
+    /// Plays a index-specific AudioClip from the 'tracks' AudioClip array.
+    /// </summary>
+    /// <param name="i"></param>
+    public void PlayTrack(int i)
     {
-        if (trackSource == null) return;
+        if (tracks == null) return;
+        if (tracks.Length == 0 || i >= tracks.Length || TrackSource.isPlaying)
+        {
+            Debug.Log("Track cancelled");
+            return;
+        }
 
-        StartCoroutine(TrackLoopRoutine( trackArray));
+        TrackSource.loop = true;
+
+        PlayTrack(tracks[i]);
     }
 
-    IEnumerator TrackLoopRoutine(AudioClip[] trackArray)
+    public void PlayTrack(AudioClip track)
+    {
+        if (TrackSource == null) return;
+        TrackSource.clip = track;
+
+        if (!TrackOn || TrackSource.isPlaying) return; 
+
+        InterruptTrackRoutines(true);
+        TrackSource.Play();
+
+    }
+    /// <summary>
+    /// Plays a random AudioClip from the 'tracks' AudioClip array.
+    /// </summary>
+    public void PlayTrack()
+    {
+        PlayTrack(Random.Range(0, tracks.Length));
+    }
+    public void PlayTrack(AudioClip[] trackArray)
+    {
+        if (TrackSource == null || !TrackOn) return;
+
+        InterruptTrackRoutines(true);
+        multiTrackRoutine = StartCoroutine(TrackLoopRoutine(TrackSource, trackArray));
+    }
+
+    IEnumerator TrackLoopRoutine(AudioSource source, AudioClip[] trackArray)
     {
         List<AudioClip> playedTracks = new List<AudioClip>();
 
@@ -222,54 +287,62 @@ public class SoundManager : MonoBehaviour {
             }
 
             playedTracks.Add(selectedClip);
-            PlayTrack(selectedClip);
+            source.clip = selectedClip;
+            source.Play();
 
-            while(trackSource.time < selectedClip.length)
+            while(TrackSource.time < selectedClip.length)
             {
-
                 yield return new WaitForEndOfFrame();
-
             }
 
         }
     }
 
-    /// <summary>
-    /// Plays a index-specific AudioClip from the 'tracks' AudioClip array.
-    /// </summary>
-    /// <param name="i"></param>
-    public void PlayTrack(int i)
+    void InterruptTrackRoutines(bool resetVolume)
     {
-        if (tracks == null) return;
-        if (tracks.Length == 0 || i >= tracks.Length || trackSource.isPlaying)
+        if(multiTrackRoutine != null) StopCoroutine(multiTrackRoutine);
+        multiTrackRoutine = null;
+
+        if(crossFadeRoutine != null) StopCoroutine(crossFadeRoutine);
+        crossFadeRoutine = null;
+
+        if(resetVolume) TrackSource.volume = TrackVolume;
+    }
+
+    public void CrossFadeTrack(AudioClip[] tracks, float duration)
+    {
+        if(!TrackOn) return;
+
+        InterruptTrackRoutines(false);
+        multiTrackRoutine = StartCoroutine(TrackLoopRoutine(SupportTrackSource, tracks));
+
+        SupportTrackSource.volume = 0f;
+        SupportTrackSource.time = TrackSource.time;
+        crossFadeRoutine = StartCoroutine(CrossFade_Routine(duration));
+    }
+
+    IEnumerator CrossFade_Routine(float duration)
+    {
+        StartCoroutine(LerpVolume_Routine(TrackSource, 0f, duration));
+        StartCoroutine(LerpVolume_Routine(SupportTrackSource, 1f, duration));
+     
+        yield return new WaitForSeconds(duration);
+        activeTrackSourceID = 1 - activeTrackSourceID;
+    }
+
+    IEnumerator LerpVolume_Routine(AudioSource source, float target, float duration)
+    {
+        var startVolume = source.volume;
+        var t = 0.0f;
+        while(t < 1.0f)
         {
-            Debug.Log("Track cancelled");
-            return;
+            t += Time.deltaTime / duration;
+            t = Mathf.Clamp01(t);
+
+            source.volume = Mathf.Lerp(startVolume, target, t);
+
+            yield return new WaitForEndOfFrame();
         }
-
-        trackSource.loop = true;
-
-        PlayTrack(tracks[i]);
-    }
-
-    public void PlayTrack(AudioClip track)
-    {
-        if (trackSource == null) return;
-        trackSource.clip = track;
-
-        if (!TrackOn || trackSource.isPlaying) return; 
-
-        trackSource.Play();
-
-    }
-
-    /// <summary>
-    /// Plays a random AudioClip from the 'tracks' AudioClip array.
-    /// </summary>
-    public void PlayTrack()
-    {
-        PlayTrack(Random.Range(0, tracks.Length));
-
     }
 
     /// <summary>
@@ -277,29 +350,34 @@ public class SoundManager : MonoBehaviour {
     /// </summary>
     public void PauseTrack()
     {
-        PauseTrack(trackSource.isPlaying);
+        PauseTrack(TrackSource.isPlaying, 0.1f);
     }
-
+    public void PauseTrack(bool value)
+    {
+        PauseTrack(value, 0.1f);
+    }
     /// <summary>
     /// Pauses (true) or Unpauses (false) the 'trackSource' depending on the nature parameter.
     /// </summary>
     /// <param name="nature">Parameter that determines if this function pauses or unpauses the 'trackSource'</param>
-    public void PauseTrack(bool nature)
+    public void PauseTrack(bool nature, float fadeDuration)
     {
+        if (TrackSource == null) return;
+        if (TrackSource.clip == null) return;
 
-        if (trackSource == null) return;
-        if (trackSource.clip == null || trackSource.time == 0) return;
-
-        if (nature) trackSource.Pause();
-        else trackSource.UnPause();
+        float volume = nature ? 0f : TrackVolume;
+        StartCoroutine(LerpVolume_Routine(TrackSource, volume, fadeDuration));
     }
 
 
     // Use this for initialization
      void Awake  ()
     {
+        Time.timeScale = 1;
+        trackVolume = 1f;
 
-        if (sfxSource == null || trackSource == null)
+        int sourcesAmount = 3;
+        if (sfxSource == null || TrackSource == null)
         {
             AudioSource[] sources = GetComponents<AudioSource>();
 
@@ -309,19 +387,18 @@ public class SoundManager : MonoBehaviour {
                 return;
 
             }
-            if(sources.Length > 2)
+            if(sources.Length > sourcesAmount)
             {
-                for (int i = 2; i < sources.Length; i++)
+                for (int i = sourcesAmount; i < sources.Length; i++)
                 {
                     Destroy(sources[i]);
-
                 }
 
             }
-             else if (sources.Length < 2)
+            else if (sources.Length < sourcesAmount)
             {
 
-                AudioSource[] array = new AudioSource[2];
+                AudioSource[] array = new AudioSource[sourcesAmount];
 
                 for (int i =   0; i < array.Length; i++)
                 {
@@ -330,34 +407,30 @@ public class SoundManager : MonoBehaviour {
                     else
                     {
                         array[i] = gameObject.AddComponent<AudioSource>();
-                         array[i].playOnAwake = false;
+                        array[i].playOnAwake = false;
                     }
                 }
 
                  sources = array;
             }
 
-            trackSource = sources[0];
-            sfxSource = sources[1];
+            trackSources = new AudioSource[] { sources[0], sources[1] };
+            TrackSource.loop = true;
+            SupportTrackSource.loop = true;
+            sfxSource = sources[2];
 
         }
 
         // DontDestroyOnLoad(gameObject);
-        //  CheckExisting();
-
-
-    }
-
-    private void Start()
-    {
         CheckExisting();
+
     }
 
     public void CheckExisting()
     {
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = FindObjectOfType<SoundManager>();
+            Instance = FindObjectOfType<SoundManager>();
 
         }
         else
