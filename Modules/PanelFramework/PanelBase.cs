@@ -90,8 +90,8 @@ public class PanelBase : MonoBehaviour
 
         if(!overrideSound)
         {
-            if (group.blocksRaycasts) SoundManager.instance.PlaySingle(profile.closeSound);
-            else SoundManager.instance.PlaySingle(profile.openSound);
+            if (group.blocksRaycasts) PlaySingle(profile.closeSound);
+            else PlaySingle(profile.openSound);
         }
 
         transform.localScale = refSize;
@@ -121,8 +121,8 @@ public class PanelBase : MonoBehaviour
                 break;
 
             case AppearType.Instant:
-                group.Toggle(value);
-                action.Execute();
+                GroupToggle(value);
+                if(action != null) action();
                 return;
 
             default:
@@ -155,8 +155,8 @@ public class PanelBase : MonoBehaviour
     {
         RawToggle(value, () =>
         {
-            InvokeAlternatives.InvokeRealtime(this, delay, action);
-
+            Action act = () => { if (action != null) action(); };
+            StartCoroutine(InvokeRealtime(delay, act));
         });
 
     }
@@ -251,7 +251,7 @@ public class PanelBase : MonoBehaviour
         return 
         () =>
         {
-            inputAction.Execute();
+            if(inputAction != null) inputAction.Invoke();
 
             if (OnPanelToggleLate != null)
                 OnPanelToggleLate(value);
@@ -264,10 +264,10 @@ public class PanelBase : MonoBehaviour
 
         if (!value)
         {
-            InvokeAlternatives.InvokeAfterFrame(this, () =>
+            StartCoroutine(InvokeAfterFrame(() =>
             {
-                PanelEvents.instance.OnPanelClose.SafeInvoke();
-            });
+                if(PanelEvents.instance.OnPanelClose != null) PanelEvents.instance.OnPanelClose.Invoke();
+            }));
 
         }
 
@@ -285,13 +285,14 @@ public class PanelBase : MonoBehaviour
 
         if (way > 0)
         {
-            group.Toggle(value);
+            GroupToggle(value);
 
-            action.Execute();
+            if(action != null) action();
 
         }
 
-        while (t < curve.GetLength())
+        var length = curve.keys.Length > 0 ? curve.keys[curve.keys.Length - 1].time : 0f;
+        while (t < length)
         {
             transform.localScale = refSize * curve.Evaluate(t);
             yield return new WaitForEndOfFrame();
@@ -303,8 +304,8 @@ public class PanelBase : MonoBehaviour
 
         if (way < 0)
         {
-            group.Toggle(value);
-            action.Execute();
+            GroupToggle(value);
+            if(action != null) action();
         }
 
         transitionCorout = null;
@@ -327,8 +328,8 @@ public class PanelBase : MonoBehaviour
         if (way > 0)
         {
             rect.anchoredPosition -= plusSize;
-            group.Toggle(value);
-            action.Execute();
+            GroupToggle(value);
+            if(action != null) action();
         }
 
         //rect.anchoredPosition = Vector2.zero;
@@ -349,8 +350,8 @@ public class PanelBase : MonoBehaviour
 
         if (way < 0)
         {
-            group.Toggle(value);
-            action.Execute();
+            GroupToggle(value);
+            if(action != null) action();
         }
 
         transitionCorout = null;
@@ -358,5 +359,24 @@ public class PanelBase : MonoBehaviour
     }
 
 
+    void PlaySingle(AudioClip clip)
+    {
+        Debug.Log("Extend this line with the desired audio clip playing method!");
+    }
+    void GroupToggle(bool value)
+    {
+        group.alpha = value ? 1f : 0f;
+        group.interactable = value;
+    }
+    IEnumerator InvokeRealtime(float delay, Action action)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        if (action != null) action();
+    }
+    IEnumerator InvokeAfterFrame(Action action)
+    {
+        yield return new WaitForEndOfFrame();
+        if (action != null) action();
+    }
 
 }
